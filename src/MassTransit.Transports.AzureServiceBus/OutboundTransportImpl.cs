@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Magnum.Extensions;
 using Magnum.Threading;
 using MassTransit.AzureServiceBus;
@@ -119,51 +120,53 @@ namespace MassTransit.Transports.AzureServiceBus
 
 			Interlocked.Increment(ref _messagesInFlight);
 
-			connection.MessageSender.BeginSend(message, ar =>
+			var sendTask = Task.Factory.FromAsync(connection.MessageSender.BeginSend, connection.MessageSender.EndSend, message, null)
+			.ContinueWith(t =>
 				{
-					var tuple = ar.AsyncState as Tuple<MessageSender, BrokeredMessage>;
-					var msg = tuple.Item2;
-					var sender = tuple.Item1;
-
-					Exception caught = null;
+					Interlocked.Decrement(ref _messagesInFlight);
+					
+					// if the queue is deleted in the middle of things here, then I can't recover
+					// at the moment; I have to extend the connection handler with an asynchronous
+					// API to let it re-initialize the queue and hence maybe even the full transport...
+					// MessagingEntityNotFoundException.
 					try
 					{
-						// if the queue is deleted in the middle of things here, then I can't recover
-						// at the moment; I have to extend the connection handler with an asynchronous
-						// API to let it re-initialize the queue and hence maybe even the full transport...
-						// MessagingEntityNotFoundException.
-						Interlocked.Decrement(ref _messagesInFlight);
-
-						sender.EndSend(ar);
-
-						Address.LogEndSend(msg.MessageId);
+						try
+						{
+							t.Wait();
+						}
+						catch (AggregateException ae)
+						{
+							throw ae.InnerException;
+						}
 					}
 					catch (ServerBusyException ex)
 					{
-						_logger.Warn(string.Format("server busy, retrying for msg #{0}", msg.MessageId), ex);
-						caught = ex;
+						_logger.Warn(string.Format("server busy, retrying for msg #{0}", message.MessageId), ex);
 					}
 					catch (MessagingCommunicationException ex)
 					{
-						_logger.Warn(string.Format("server sad, retrying for msg #{0}", msg.MessageId), ex);
-						caught = ex;
+						_logger.Warn(string.Format("server sad, retrying for msg #{0}", message.MessageId), ex);
 					}
 					catch (Exception ex)
 					{
-						_logger.Error(string.Format("other exception for msg #{0}", msg.MessageId), ex);
-						caught = ex;
+						_logger.Error(string.Format("other exception for msg #{0}", message.MessageId), ex);
 					}
 
+					Address.LogEndSend(message.MessageId);
+
 					// success
-					if (caught == null) return;
+					if (t.Exception == null) return;
 
 					// schedule retry
-					var retries = UpdateRetries(msg);
-					_logger.WarnFormat("scheduling retry no. {0} for msg #{1} ", retries, msg.MessageId);
-					
-					RetryLoop(connection, msg);
+					var retries = UpdateRetries(message);
+					_logger.WarnFormat("scheduling retry no. {0} for msg #{1} ", retries, message.MessageId);
 
-				}, Tuple.Create(connection.MessageSender, message));
+					RetryLoop(connection, message);
+				});
+
+			// optionally block here
+			// sendTask.Wait();
 		}
 
 
