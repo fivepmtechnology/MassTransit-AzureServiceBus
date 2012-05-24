@@ -40,7 +40,7 @@ type RecvMsg =
   | Halt of AsyncReplyChannel<unit>
   | SubscribeQueue of QueueDescription * Concurrency
   | UnsubscribeQueue of QueueDescription
-  | SubscribeTopic of TopicDescription * Concurrency
+  | SubscribeTopic of TopicDescription * Type * Concurrency
   | UnsubscribeTopic of TopicDescription
   | AsyncFaultOccurred of exn
 
@@ -265,10 +265,10 @@ type Receiver(desc   : QueueDescription,
           logger.Warn "SKIP:UnsubscribeQueue (TODO - do we even need this?)"
           return! started state cts
 
-        | SubscribeTopic(td, cc) ->
+        | SubscribeTopic(td, t, cc) ->
           logger.DebugFormat("SubscribeTopic '{0}'", td.Path)
           let childAsyncCts = childTokenFrom cts
-          let sub = sett.ReceiverName
+          let sub = sett.GetReceiverName.Invoke t
           do! td |> Topic.subscribe nm sub
           let! pairs = initReceiverSet' (Topic.newReceiver sub) td
           do childAsyncCts |> getToken |> startPairsAsync pairs
@@ -357,9 +357,9 @@ type Receiver(desc   : QueueDescription,
     logger.InfoFormat("stop called for queue '{0}'", desc)
     a.Post Pause
 
-  member x.Subscribe ( td : TopicDescription ) =
+  member x.Subscribe ( td : TopicDescription, t : Type ) =
     logger.InfoFormat("subscribe called for topic description '{0}'", td)
-    a.Post <| SubscribeTopic( td, sett.Concurrency )
+    a.Post <| SubscribeTopic( td, t, sett.Concurrency )
 
   member x.Unsubscribe ( td : TopicDescription ) =
     logger.InfoFormat("unsubscribe called for topic description '{0}'", td)

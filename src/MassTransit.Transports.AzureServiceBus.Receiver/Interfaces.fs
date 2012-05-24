@@ -21,7 +21,7 @@ type ReceiverSettings =
   abstract member BufferSize : uint32 with get
   abstract member NThAsync : uint32 with get
   abstract member ReceiveTimeout : TimeSpan with get
-  abstract member ReceiverName : string with get
+  abstract member GetReceiverName : Func<Type, string> with get
 
 type MessageReceiver =
   abstract member BeginReceive : TimeSpan * AsyncCallback * obj -> IAsyncResult

@@ -43,11 +43,19 @@ namespace MassTransit.Transports.AzureServiceBus.Configuration
 		void SetBatchedOperations(bool enabled);
 
 		/// <summary>
-		/// 	Set the receiver name (this corresponds to the name of the subscription created on topics in Azure ServiceBus. Setting this equal to what another bus has, allows your bus to do competing consumes on all message types that it consumes.
+		/// 	Set the receiver name (this corresponds to the name of the subscription created on topics in Azure Service Bus.
+		/// Setting this equal to what another bus has, allows your bus to do competing consumes on all message types that it consumes.
 		/// </summary>
 		/// <exception cref="ArgumentException">name.trim() is an empty string</exception>
 		/// <param name="name"> Name to use for subscriptions. </param>
 		void SetReceiverName(string name);
+
+        /// <summary>
+        /// 	Set the receiver name lookup function (this corresponds to the name of the subscription created on topics in Azure Service Bus.
+        ///     Returning a value equal to what another bus has, allows your bus to do competing consumes on all message types that it consumes.
+        /// </summary>
+        /// <param name="lookup"> Lookup function that produces names to use for subscriptions. </param>
+        void SetReceiverNameLookup(Func<Type, string> lookup);
 
 		/// <summary>
 		/// 	Sets the timeout for receiving a message using a single operation.
@@ -126,13 +134,21 @@ namespace MassTransit.Transports.AzureServiceBus.Configuration
 			_sendSett.MaxOutstanding = number;
 		}
 
+        public void SetReceiverNameLookup([NotNull] Func<Type, string> lookup)
+        {
+            if(lookup == null) throw new ArgumentNullException("lookup");
+
+            _logger.Debug("configured receiver name lookup");
+            _recvSett.GetReceiverName = lookup;
+        }
+
 		public void SetReceiverName([NotNull] string name)
 		{
 			if (name == null) throw new ArgumentNullException("name");
 			if (name.Trim() == "") throw new ArgumentException("name mustn't be empty", "name");
 
 			_logger.DebugFormat("setting ReceiverName to {0}", name);
-			_recvSett.ReceiverName = name;
+			SetReceiverNameLookup(_ => name);
 		}
 	}
 }

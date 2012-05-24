@@ -39,7 +39,7 @@ namespace MassTransit.Transports.AzureServiceBus
 		readonly AzureServiceBusEndpointAddress _address;
 
 		readonly ConnectionHandler<ConnectionImpl> _connectionHandler;
-		readonly Cache<Guid, TopicDescription> _subscribed = new ConcurrentCache<Guid, TopicDescription>();
+        readonly Cache<Guid, Tuple<TopicDescription, Type>> _subscribed = new ConcurrentCache<Guid, Tuple<TopicDescription, Type>>();
 		PerConnectionReceiver _receiver;
 
 		bool _bound;
@@ -179,13 +179,13 @@ namespace MassTransit.Transports.AzureServiceBus
 					{
 						lock (_subscribed)
 							foreach (var d in _subscribed)
-								recv.Subscribe(d);
+								recv.Subscribe(d.Item1, d.Item2);
 					},
 				recv =>
 					{
 						lock (_subscribed)
 							foreach (var d in _subscribed)
-								recv.Unsubscribe(d);
+								recv.Unsubscribe(d.Item1);
 					});
 
 			_connectionHandler.AddBinding(_receiver);
@@ -210,14 +210,14 @@ namespace MassTransit.Transports.AzureServiceBus
 			}
 		}
 
-		public void SignalBoundSubscription(Guid key, TopicDescription value)
+		public void SignalBoundSubscription(Guid key, TopicDescription topic, Type messageType)
 		{
 			lock (_subscribed)
 				if (!_subscribed.Has(key))
-					_subscribed.Add(key, value);
+					_subscribed.Add(key, new Tuple<TopicDescription, Type>(topic, messageType));
 		}
 
-		public void SignalUnboundSubscription(Guid key, TopicDescription value)
+		public void SignalUnboundSubscription(Guid key)
 		{
 			lock (_subscribed)
 				if (_subscribed.Has(key))
