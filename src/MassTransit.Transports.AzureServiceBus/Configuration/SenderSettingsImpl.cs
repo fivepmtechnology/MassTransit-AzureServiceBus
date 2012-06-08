@@ -13,7 +13,7 @@
 
 namespace MassTransit.Transports.AzureServiceBus.Configuration
 {
-	public class SenderSettingsImpl
+	class SenderSettingsImpl
 		: SenderSettings
 	{
 		public SenderSettingsImpl()

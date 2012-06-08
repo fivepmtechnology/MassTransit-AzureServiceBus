@@ -36,9 +36,8 @@ namespace MassTransit.Transports.AzureServiceBus
 		bool _disposed;
 
 		int _messagesInFlight;
-		int _sleeping;
 
-		readonly AzureServiceBusEndpointAddress _address;
+	  readonly AzureServiceBusEndpointAddress _address;
 		readonly ConnectionHandler<ConnectionImpl> _connectionHandler;
 		readonly SenderSettings _settings;
 
