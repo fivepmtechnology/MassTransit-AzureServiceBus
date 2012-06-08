@@ -23,75 +23,75 @@ using MassTransit.Util;
 
 namespace MassTransit.Transports.AzureServiceBus
 {
-	/// <summary>
-	/// 	Monitors the subscriptions from the local bus and subscribes the topics with topic clients when subscriptions occur: when they do; create the appropriate topics for them.
-	/// </summary>
-	public class TopicSubscriptionObserver
-		: SubscriptionObserver
-	{
-		static readonly ILog _logger = Logger.Get(typeof (TopicSubscriptionObserver));
+  /// <summary>
+  /// 	Monitors the subscriptions from the local bus and subscribes the topics with topic clients when subscriptions occur: when they do; create the appropriate topics for them.
+  /// </summary>
+  public class TopicSubscriptionObserver
+    : SubscriptionObserver
+  {
+    static readonly ILog _logger = Logger.Get(typeof(TopicSubscriptionObserver));
 
-		readonly IMessageNameFormatter _formatter;
-		readonly InboundTransportImpl _inboundTransport;
-		readonly Dictionary<Guid, TopicDescription> _bindings;
+    readonly IMessageNameFormatter _formatter;
+    readonly InboundTransportImpl _inboundTransport;
+    readonly Dictionary<Guid, TopicDescription> _bindings;
 
-		public TopicSubscriptionObserver(
-			[NotNull] IMessageNameFormatter formatter,
-			[NotNull] InboundTransportImpl inboundTransport)
-		{
-			if (formatter == null) throw new ArgumentNullException("formatter");
-			if (inboundTransport == null) throw new ArgumentNullException("inboundTransport");
+    public TopicSubscriptionObserver(
+      [NotNull] IMessageNameFormatter formatter,
+      [NotNull] InboundTransportImpl inboundTransport)
+    {
+      if (formatter == null) throw new ArgumentNullException("formatter");
+      if (inboundTransport == null) throw new ArgumentNullException("inboundTransport");
 
-			_formatter = formatter;
-			_inboundTransport = inboundTransport;
+      _formatter = formatter;
+      _inboundTransport = inboundTransport;
 
-			_bindings = new Dictionary<Guid, TopicDescription>();
-		}
+      _bindings = new Dictionary<Guid, TopicDescription>();
+    }
 
-		public void OnSubscriptionAdded(SubscriptionAdded message)
-		{
-			if (message == null)
-				throw new ArgumentNullException("message");
+    public void OnSubscriptionAdded(SubscriptionAdded message)
+    {
+      if (message == null)
+        throw new ArgumentNullException("message");
 
-		    var messageType = GetMessageType(message);
-			var messageName = GetMessageName(messageType);
-			_bindings[message.SubscriptionId] = new TopicDescriptionImpl(messageName.ToString());
-			_bindings.Each(kv => _inboundTransport.SignalBoundSubscription(kv.Key /* subId */, kv.Value /* topic desc */, messageType));
-		}
+      var messageType = GetMessageType(message);
+      var messageName = GetMessageName(messageType);
+      _bindings[message.SubscriptionId] = new TopicDescriptionImpl(messageName.ToString());
+      _bindings.Each(kv => _inboundTransport.SignalBoundSubscription(kv.Key /* subId */, kv.Value /* topic desc */, messageType));
+    }
 
-		public void OnSubscriptionRemoved(SubscriptionRemoved message)
-		{
-			_logger.Debug(string.Format("subscription removed: '{0}'", message));
+    public void OnSubscriptionRemoved(SubscriptionRemoved message)
+    {
+      _logger.Debug(string.Format("subscription removed: '{0}'", message));
 
-			var messageName = GetMessageName(message);
+      var messageName = GetMessageName(message);
 
-			if (_bindings.ContainsKey(message.SubscriptionId))
-			{
-				_logger.Debug(string.Format("cannot remove topic {0} because we don't know who consumes off of it",
-				                            messageName));
+      if (_bindings.ContainsKey(message.SubscriptionId))
+      {
+        _logger.Debug(string.Format("cannot remove topic {0} because we don't know who consumes off of it",
+                                    messageName));
 
-				_bindings.Remove(message.SubscriptionId);
-				_bindings.Each(kv => _inboundTransport.SignalUnboundSubscription(kv.Key));
-			}
-		}
+        _bindings.Remove(message.SubscriptionId);
+        _bindings.Each(kv => _inboundTransport.SignalUnboundSubscription(kv.Key));
+      }
+    }
 
-        Type GetMessageType(Subscription message)
-        {
-            return Type.GetType(message.MessageName);
-        }
+    Type GetMessageType(Subscription message)
+    {
+      return Type.GetType(message.MessageName);
+    }
 
-		MessageName GetMessageName(Type messageType)
-		{
-			return _formatter.GetMessageName(messageType);
-		}
+    MessageName GetMessageName(Type messageType)
+    {
+      return _formatter.GetMessageName(messageType);
+    }
 
-        MessageName GetMessageName(Subscription message)
-        {
-            return _formatter.GetMessageName(GetMessageType(message));
-        }
+    MessageName GetMessageName(Subscription message)
+    {
+      return _formatter.GetMessageName(GetMessageType(message));
+    }
 
-		public void OnComplete()
-		{
-		}
-	}
+    public void OnComplete()
+    {
+    }
+  }
 }
