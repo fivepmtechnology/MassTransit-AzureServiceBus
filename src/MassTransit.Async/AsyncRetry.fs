@@ -128,7 +128,7 @@ module AsyncRetry =
 
     /// retry timeouts 9 times with a ts delay if fAcc returns true and the generic parameter matches the exception
   let exnRetryLong<'ex when 'ex :> exn> fAcc ts =
-    RetryPolicy( ShouldRetry(fun (count, ex) -> count < 9 && (match box ex with | :? 'ex -> fAcc(ex :?> 'ex) | _ -> false), ts),
+    RetryPolicy( ShouldRetry(fun (count, ex) -> true && (match box ex with | :? 'ex -> fAcc(ex :?> 'ex) | _ -> false), ts),
       sprintf "This policy catches %s exceptions 9 times if the passed f-n accepts the exception" <| typeof<'ex>.Name )
 
   /// retry timeouts 9 times with a ts delay if the generic parameter matches the exception
