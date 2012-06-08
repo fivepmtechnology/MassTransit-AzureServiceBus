@@ -8,7 +8,7 @@
 
   **********************************************************************************************
 -->
-<ServiceDefinition name="MassTransit.AzurePerformance.Sender" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceDefinition">
+<ServiceDefinition name="MassTransit.AzurePerformance.Sender" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceDefinition" schemaVersion="2012-05.1.7">
   <WorkerRole name="MassTransit.AzurePerformance.Receiver" vmsize="Small">
     <Imports>
       <Import moduleName="Diagnostics" />
