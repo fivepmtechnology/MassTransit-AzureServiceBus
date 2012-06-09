@@ -90,7 +90,7 @@ nuspec :nuspec => ['build/nuspec', :nuspec_copy] do |nuspec|
   nuspec.licenseUrl = "http://www.apache.org/licenses/LICENSE-2.0"
   nuspec.requireLicenseAcceptance = "true"
   nuspec.dependency "MassTransit", "2.1.1"
-  nuspec.dependency "WindowsAzure.ServiceBus", "1.6.0"
+  nuspec.dependency "WindowsAzure.ServiceBus", "1.7.0"
   nuspec.output_file = 'build/nuspec/MassTransit.AzureServiceBus.nuspec'
 end
 
