@@ -126,12 +126,12 @@ module AsyncRetry =
     member x.Using<'T, 'U when 'T :> IDisposable>(resource : 'T, work : ('T -> Async<'U>)) = 
       using resource work
 
-    /// retry timeouts 9 times with a ts delay if fAcc returns true and the generic parameter matches the exception
+  /// retry timeouts with a ts delay if fAcc returns true and the generic parameter matches the exception
   let exnRetryLong<'ex when 'ex :> exn> fAcc ts =
-    RetryPolicy( ShouldRetry(fun (count, ex) -> true && (match box ex with | :? 'ex -> fAcc(ex :?> 'ex) | _ -> false), ts),
-      sprintf "This policy catches %s exceptions 9 times if the passed f-n accepts the exception" <| typeof<'ex>.Name )
+    RetryPolicy( ShouldRetry(fun (count, ex) -> (match box ex with | :? 'ex -> fAcc(ex :?> 'ex) | _ -> false), ts),
+      sprintf "This policy catches %s exceptions if the passed f-n accepts the exception" <| typeof<'ex>.Name )
 
-  /// retry timeouts 9 times with a ts delay if the generic parameter matches the exception
+  /// retry timeouts with a ts delay if the generic parameter matches the exception
   let exnRetry<'ex when 'ex :> exn> = exnRetryLong<'ex> (fun _ -> true)
 
   let exnRetryCust<'ex when 'ex :> exn> f =
