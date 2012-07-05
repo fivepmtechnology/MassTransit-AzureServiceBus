@@ -27,7 +27,7 @@ namespace MassTransit.Transports.AzureServiceBus.Internal
 		/// </summary>
 		public static void LogBeginSend(this IEndpointAddress sourceAddress, string messageId)
 		{
-			_messages.InfoFormat("SEND begin:{0}:{1}", sourceAddress, messageId);
+			_messages.DebugFormat("SEND begin:{0}:{1}", sourceAddress, messageId);
 		}
 
 		/// <summary>
@@ -35,7 +35,7 @@ namespace MassTransit.Transports.AzureServiceBus.Internal
 		/// </summary>
 		public static void LogEndSend(this IEndpointAddress sourceAddress, string messageId)
 		{
-			_messages.InfoFormat("SEND end:{0}:{1}", sourceAddress, messageId);
+      _messages.DebugFormat("SEND end:{0}:{1}", sourceAddress, messageId);
 		}
 
 		/// <summary>
