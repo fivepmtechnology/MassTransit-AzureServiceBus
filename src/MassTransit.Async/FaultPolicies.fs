@@ -42,7 +42,8 @@ module FaultPolicies =
     seq { 
       yield exnRetry<CommunicationException>          // communication exception?
       yield exnRetryLong<SocketException> (fun ex -> ex.SocketErrorCode = SocketError.TimedOut)
-      yield exnRetry<ProtocolException> }
+      yield exnRetry<ProtocolException>
+      yield exnRetryLong<UnauthorizedAccessException> (fun ex -> ex.Message.Contains("The remote name could not be resolved")) }
     |> Seq.map (fun pBuild -> pBuild (fun ex -> async { do! Async.Sleep 5 }))
 
   /// these should not ever be seen by a consumer of the client library and should count towards downtime of ASB.
